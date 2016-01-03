@@ -354,12 +354,14 @@ class Client(object):
     #### formatting
     def encode(self, value):
         if not isinstance(value, str):
-            if not PY3 and isinstance(value, unicode):
-                value = value.encode('utf-8')
+            if PY3:
+                if not isinstance(value, bytes):
+                    value = str(value)
             else:
-                value = str(value)
-        if PY3:
-            value = value.encode('utf-8')
+                if isinstance(value, unicode):
+                    value = value.encode('utf-8')
+                else:
+                    value = str(value)
         return value
 
     def format_command(self, *tokens, **kwargs):
@@ -367,8 +369,8 @@ class Client(object):
         for t in tokens:
             e_t = self.encode(t)
             e_t_s = to_basestring(e_t)
-            cmds.append('$%s\r\n%s\r\n' % (len(e_t), e_t_s))
-        return '*%s\r\n%s' % (len(tokens), ''.join(cmds))
+            cmds.append('${}\r\n{}\r\n'.format(len(e_t), e_t_s))
+        return '*{}\r\n{}'.format(len(tokens), ''.join(cmds))
 
     def format_reply(self, cmd_line, data):
         if cmd_line.cmd not in REPLY_MAP:
